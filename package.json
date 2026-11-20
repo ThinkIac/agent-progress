@@ -1,0 +1,21 @@
+{
+  "name": "agent-progress",
+  "version": "0.1.0",
+  "description": "Resumos periódicos do progresso do agente",
+  "type": "module",
+  "main": "index.js",
+  "logosDependencies": { "agent": "*", "ui-schema": "*" },
+  "manifest": {
+    "name": "Resumos de progresso",
+    "launch": false,
+    "settingsSection": {
+      "id": "agent-progress:preferences",
+      "tab": "sessions",
+      "label": "Resumos de progresso",
+      "renderer": "schema",
+      "surface": "settings-form",
+      "order": 20
+    }
+  },
+  "scripts": { "test": "node --test test/*.test.js" }
+}
