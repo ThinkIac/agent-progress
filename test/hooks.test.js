@@ -73,3 +73,29 @@ test('o hook libera a iteração enquanto o modelo está pendente e aborta no fi
   await new Promise(resolve => setImmediate(resolve))
   assert.deepEqual(published, [])
 })
+
+
+test('o relógio recebe dez resultados durante a mesma iteração do provider', async () => {
+  let timer
+  const calls = []
+  const handle = createProgressHook(async (event, request) => {
+    calls.push(request)
+    return { success: true, text: 'Dez verificações executadas' }
+  }, () => ({ ...input, every: 10 }), {
+    setTimer(fn) { timer = fn; return fn },
+    clearTimer() { timer = null },
+  })
+  await handle({ phase: 'start', sessionId: 'stream', pools: () => pools, objective: () => 'Investigar falha', deliver() {} })
+  await handle({ phase: 'iteration', sessionId: 'stream', iteration: 1 })
+  for (let i = 1; i <= 10; i++) {
+    await handle({ phase: 'step', sessionId: 'stream', steps: [{ iteration: 1, tool: 'read_file', status: i === 10 ? 'failed' : 'completed', result: `resultado ${i}` }] })
+  }
+  assert.equal(calls.length, 0)
+  timer()
+  await new Promise(resolve => setImmediate(resolve))
+  const evidence = JSON.parse(calls[0].prompt)
+  assert.equal(evidence.filter(step => step.tool).length, 10)
+  assert.equal(evidence.at(-1).result, 'resultado 10')
+  assert.equal(evidence.at(-1).status, 'failed')
+  await handle({ phase: 'finish', sessionId: 'stream' })
+})

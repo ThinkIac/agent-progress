@@ -2,8 +2,9 @@ import { dispatchEvent } from 'logos'
 import { activeModels, loadPreferences } from './preferences.js'
 import { createProgressReporter } from './index.js'
 
-export function createProgressHook(dispatch = dispatchEvent, load = loadPreferences) {
+export function createProgressHook(dispatch = dispatchEvent, load = loadPreferences, timers = {}) {
   const reporter = createProgressReporter({
+    ...timers,
     async callModel({ model, pool, system, prompt, signal }) {
       const abortSignal = signal
         ? AbortSignal.any([signal, AbortSignal.timeout(12_000)])
@@ -34,6 +35,8 @@ export function createProgressHook(dispatch = dispatchEvent, load = loadPreferen
       reporter.start(sessionId, { ...config, model: selected.model, pool: selected.pool, signal, deliver })
       reporter.observe(sessionId, { request: objective() })
       return true
+    } else if (phase === 'step') {
+      for (const step of steps || []) reporter.observe(sessionId, step)
     } else if (phase === 'iteration') {
       if (iteration > 1) reporter.observe(sessionId, { iteration: iteration - 1, status: 'finished' })
       for (const step of steps || []) reporter.observe(sessionId, step)
