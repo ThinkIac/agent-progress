@@ -36,9 +36,9 @@ export function createProgressHook(dispatch = dispatchEvent, load = loadPreferen
       return true
     } else if (phase === 'iteration') {
       if (iteration > 1) reporter.observe(sessionId, { iteration: iteration - 1, status: 'finished' })
-      for (const step of steps) reporter.observe(sessionId, step)
+      for (const step of steps || []) reporter.observe(sessionId, step)
       reporter.observe(sessionId, { iteration, status: 'in progress' })
-      await reporter.iteration(sessionId, iteration)
+      void reporter.iteration(sessionId, iteration)
     } else if (phase === 'finish') {
       reporter.finish(sessionId)
     }

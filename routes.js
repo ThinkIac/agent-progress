@@ -9,7 +9,7 @@ export function progressSurface(options) {
     version: 1,
     kind: 'settings-form',
     title: 'Resumos de progresso',
-    description: 'Envia uma atualização na conversa a cada intervalo de iterações do agente.',
+    description: 'Envia atualizações sem pausar o agente, por intervalo de iterações e durante etapas longas (30 segundos entre tentativas).',
     submitAction: ACTION,
     actions: { [ACTION]: { intent: 'write' } },
     forms: { preferences: { fields: [

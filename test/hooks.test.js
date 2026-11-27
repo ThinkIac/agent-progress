@@ -41,6 +41,7 @@ test('hook faz llm:call na pool selecionada e publica a resposta durante o turno
   assert.equal(calls.length, 0)
   const step = { iteration: 1, tool: 'read_file', status: 'completed' }
   await tick(2, [step])
+  await new Promise(resolve => setImmediate(resolve))
   assert.equal(calls.length, 1)
   const [event, request] = calls[0]
   assert.equal(event, 'llm:call')
@@ -53,4 +54,22 @@ test('hook faz llm:call na pool selecionada e publica a resposta durante o turno
   await handle({ phase: 'finish', sessionId })
   await tick(4)
   assert.equal(calls.length, 1)
+})
+
+test('o hook libera a iteração enquanto o modelo está pendente e aborta no fim', async () => {
+  let resolve, signal
+  const published = []
+  const handle = createProgressHook(async (event, request) => {
+    signal = request.abortSignal
+    return new Promise(r => { resolve = r })
+  }, () => ({ ...input, every: 1 }))
+  await handle({ phase: 'start', sessionId: 'slow', pools: () => pools, objective: () => 'Tarefa', deliver: text => published.push(text) })
+  await handle({ phase: 'iteration', sessionId: 'slow', iteration: 1, steps: [] })
+  assert.ok(resolve, 'a chamada começou sem bloquear o hook')
+  assert.equal(signal.aborted, false)
+  await handle({ phase: 'finish', sessionId: 'slow' })
+  assert.equal(signal.aborted, true)
+  resolve({ success: true, text: 'atrasado' })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(published, [])
 })
